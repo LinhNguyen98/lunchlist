@@ -30,6 +30,6 @@ public class Restaurant {
     }
     @Override
     public  String toString(){
-        return name+" - "+address+" - "+type;
+        return (getName());
     }
 }
