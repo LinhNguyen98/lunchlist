@@ -31,18 +31,25 @@ public class MainActivity extends TabActivity {
 /*
 private Restaurant r = new Restaurant();
 */
-private List<Restaurant> listRestaurant = new ArrayList<Restaurant>();
+    Cursor curRestaurant = null;
     RestaurantAdapter adapter = null;
+    RestaurantHelper helper = null;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        helper = new RestaurantHelper(this);
+
         Button save = (Button) findViewById(R.id.save);
         save.setOnClickListener(onSave);
         ListView list =(ListView)findViewById(R.id.restaurants);
         list.setOnItemClickListener(onListClick);
 
-        adapter = new RestaurantAdapter();
+        curRestaurant = helper.getAll();
+        startManagingCursor(curRestaurant);
+        adapter = new RestaurantAdapter(curRestaurant);
         list.setAdapter(adapter);
 
         TabHost.TabSpec spec = getTabHost().newTabSpec("tag1");
@@ -76,48 +83,56 @@ private List<Restaurant> listRestaurant = new ArrayList<Restaurant>();
                 default:
                     break;
             }
-            listRestaurant.add(r);
+            helper.insert(r.getName(), r.getAddress(),
+                    r.getType());
+            curRestaurant.requery();
 
         }
     };
-    class RestaurantAdapter extends ArrayAdapter<Restaurant> {
-        public RestaurantAdapter(Context context, int textViewResoureId) {
-            super(context, textViewResoureId);
+    @Override
+    protected void onDestroy() {
+        // TODO Auto-generated method stub
+        super.onDestroy();
+        // Đóng cơ sở dữ liệu
+        helper.close();
+        // }// end onDestroy
+    }
+    class RestaurantAdapter extends CursorAdapter {
+        public RestaurantAdapter(Cursor c) {
+            super(MainActivity.this, c);
         }
 
-        public RestaurantAdapter() {
-            super(MainActivity.this, android.R.layout.simple_list_item_1, listRestaurant);
+        public RestaurantAdapter(Context context, Cursor c) {
+            super(context, c);
         }
         @Override
-        public View getView(int position, View convertView, ViewGroup parent)
-        {
-            View row = convertView;
-            if(row==null)
-            {
-                LayoutInflater inflater = getLayoutInflater();
-                row = inflater.inflate(R.layout.row, null);
-            }
-            Restaurant r = listRestaurant.get(position);
+        public void bindView(View view, Context context, Cursor cursor) {
+            View row = view;
             ((TextView)row.findViewById(R.id.title)).
-                    setText(r.getName());
+                    setText(helper.getName(cursor));
             ((TextView)row.findViewById(R.id.address)).
-                    setText(r.getAddress());
+                    setText(helper.getAddress(cursor));
             ImageView icon = (ImageView)row.findViewById(R.id.icon);
-            String type = r.getType();
+            String type = helper.getType(cursor);
             if (type.equals("Take out"))
                 icon.setImageResource(R.drawable.icon1);
             else if (type.equals("Sit down"))
                 icon.setImageResource(R.drawable.icon2);
             else
                 icon.setImageResource(R.drawable.icon3);
+        }
+        @Override
+        public View newView(Context context, Cursor cursor, ViewGroup parent) {
+            // TODO Auto-generated method stub
+            LayoutInflater inflater = getLayoutInflater();
+            View row = inflater.inflate(R.layout.row, parent, false);
             return row;
-
         }
     }
     private AdapterView.OnItemClickListener onListClick = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-Restaurant r = listRestaurant.get(position);
+            curRestaurant.moveToPosition(position);
             EditText name;
             EditText address;
             RadioGroup types;
@@ -126,11 +141,11 @@ Restaurant r = listRestaurant.get(position);
             address = (EditText)findViewById(R.id.addr);
             types = (RadioGroup)findViewById(R.id.type);
 
-            name.setText(r.getName());
-            address.setText(r.getAddress());
-            if (r.getType().equals("Sit down"))
+            name.setText(helper.getName(curRestaurant));
+            address.setText(helper.getAddress(curRestaurant));
+            if (helper.getType(curRestaurant).equals("Sit down"))
                 types.check(R.id.sit_down);
-            else if (r.getType().equals("Take out"))
+            else if (helper.getType(curRestaurant).equals("Take out"))
                 types.check(R.id.take_out);
             else
                 types.check(R.id.delivery);
