@@ -22,13 +22,16 @@ import android.app.Activity;
 import android.os.Bundle;
 import java.util.ArrayList;
 import java.util.List;
+import android.database.Cursor;
+
 
 public class MainActivity extends Activity {
 /*
 private Restaurant r = new Restaurant();
 */
 private List<Restaurant> listRestaurant = new ArrayList<Restaurant>();
-private ArrayAdapter<Restaurant> adapter =null;
+    RestaurantAdapter adapter = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +40,7 @@ private ArrayAdapter<Restaurant> adapter =null;
         save.setOnClickListener(onSave);
         ListView list =(ListView)findViewById(R.id.restaurants);
 
-        adapter = new ArrayAdapter<Restaurant>(this, android.R.layout.simple_list_item_1,listRestaurant);
+        adapter = new RestaurantAdapter();
         list.setAdapter(adapter);
 
     }
@@ -63,9 +66,46 @@ private ArrayAdapter<Restaurant> adapter =null;
                     break;
             }
             listRestaurant.add(r);
-//            helper.insert(restaurant.getName(), restaurant.getAddress(),
-//                    restaurant.getType());
-//            curRestaurant.requery();
+
         }
     };
+    class RestaurantAdapter extends ArrayAdapter<Restaurant> {
+        public RestaurantAdapter(Context context, int textViewResoureId) {
+            super(context, textViewResoureId);
+        }
+
+        public RestaurantAdapter() {
+            super(MainActivity.this, android.R.layout.simple_list_item_1, listRestaurant);
+        }
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
+            View row = convertView;
+            if(row==null)
+            {
+                LayoutInflater inflater = getLayoutInflater();
+                row = inflater.inflate(R.layout.row, null);
+            }
+            Restaurant r = listRestaurant.get(position);
+            ((TextView)row.findViewById(R.id.title)).
+                    setText(r.getName());
+            ((TextView)row.findViewById(R.id.address)).
+                    setText(r.getAddress());
+            ImageView icon = (ImageView)row.findViewById(R.id.icon);
+            String type = r.getType();
+            if (type.equals("Take out"))
+                icon.setImageResource(R.drawable.icon1);
+            else if (type.equals("Sit down"))
+                icon.setImageResource(R.drawable.icon2);
+            else
+                icon.setImageResource(R.drawable.icon3);
+            return row;
+
+        }
+    }
+
+
+
+
+
 }
